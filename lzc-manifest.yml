@@ -1,0 +1,143 @@
+application:
+  subdomain: librenms
+  routes:
+    - /=http://librenms.cloud.lazycat.app.librenms.lzcapp:8000
+  health_check:
+    # 健康检查指向 nginx 直接提供的静态文件：不依赖数据库、不依赖 PHP，nginx 起来就 200。
+    # 数据库初始化（migrate / db:seed）已挪到后台（content/lzc-db-init.sh），
+    # 所以平台会在几秒内看到应用就绪；不再出现旧版那种
+    # 「librenms:8000 connection refused → 应用状态错误 / 启动失败」（审核 #20220、#19181）。
+    test_url: http://librenms.cloud.lazycat.app.librenms.lzcapp:8000/lzc-healthz.txt
+    start_period: 600s
+  injects:
+    - id: lazycat-file-bridge
+      'on': request
+      # 必须显式 false：默认 true 时没有合法 SAFE_UID 的上下文会跳过整条注入
+      auth_required: false
+      when:
+        - /__lazycat_file_bridge/*
+      do:
+        - src: |
+            const bridgePrefix = "/__lazycat_file_bridge";
+            const requestHost = String(ctx.request.host || "")
+              .split(":")[0]
+              .toLowerCase();
+            const firstDot = requestHost.indexOf(".");
+            const method = String(ctx.request.method || "").toUpperCase();
+
+            if (
+              firstDot <= 0 ||
+              !requestHost.endsWith(".heiyu.space") ||
+              !["GET", "HEAD", "PUT"].includes(method)
+            ) {
+              ctx.response.send(
+                ["GET", "HEAD", "PUT"].includes(method) ? 400 : 405,
+                "Invalid LazyCat file bridge request",
+              );
+              return;
+            }
+
+            const boxDomain = requestHost.slice(firstDot + 1);
+            const fileOrigin = "https://file." + boxDomain;
+            const targetPath =
+              "/files/home" + ctx.request.path.slice(bridgePrefix.length);
+
+            ctx.headers.del("Origin");
+            ctx.headers.del("Referer");
+            ctx.proxy.to(fileOrigin, {
+              path: targetPath,
+              query: ctx.request.raw_query,
+              use_target_host: true,
+              timeout_ms: 120000,
+              on_fail: "error",
+            });
+    - id: open-save-chooser
+      # 【2026-10-13 返工】保持默认 auth_required=true：无票据上下文里官方脚本
+      # 必然报 invalid lzcapp api frontend api request（各应用同类教训）。
+      'on': browser
+      when:
+        - /*
+      do:
+        - src: >-
+            file:///lzcapp/pkg/content/lazycat-injects/lzc-file-chooser-inject.js
+          params:
+            diskRoot: /_lzc/files/home
+            fileBridgeRoot: /__lazycat_file_bridge
+            fallbackMime: application/octet-stream
+            locale: auto
+            hooks:
+              fileSystemAccess: true
+              fileInput: true
+              downloadAnchor: true
+    - id: lazycat-auto-login
+      'on': browser
+      auth_required: false
+      when:
+        - /*
+      do:
+        - src: file:///lzcapp/pkg/content/auto-login.js
+services:
+  db:
+    image: registry.lazycat.cloud/wans/library/mariadb:4ab786d5272cd8f8
+    command: >-
+      mysqld --innodb-file-per-table=1 --lower-case-table-names=0
+      --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    environment:
+      - MARIADB_RANDOM_ROOT_PASSWORD=yes
+      - MYSQL_DATABASE=librenms
+      - MYSQL_USER=librenms
+      - MYSQL_PASSWORD=librenmslazy2026
+      - TZ=Asia/Shanghai
+    healthcheck:
+      # mariadb 官方镜像自带 healthcheck.sh；让平台能判断数据库是否真的可用，
+      # 而不是只看容器进程在不在
+      test:
+        - CMD
+        - healthcheck.sh
+        - --connect
+        - --innodb_initialized
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 300s
+    binds:
+      - /lzcapp/var/db:/var/lib/mysql
+  redis:
+    image: registry.lazycat.cloud/wans/library/redis:84a5e860c8bcec99
+    environment:
+      - TZ=Asia/Shanghai
+    healthcheck:
+      test:
+        - CMD
+        - redis-cli
+        - ping
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 120s
+  librenms:
+    image: registry.lazycat.cloud/wans/librenms/librenms:29cd12ef4803f9a4
+    entrypoint: sh -c 'sh /lzcapp/pkg/content/entrypoint.sh'
+    environment:
+      - TZ=Asia/Shanghai
+      - PUID=1000
+      - PGID=1000
+      - DB_HOST=db.cloud.lazycat.app.librenms.lzcapp
+      - DB_NAME=librenms
+      - DB_USER=librenms
+      - DB_PASSWORD=librenmslazy2026
+      # 后台初始化脚本自己等数据库；把上游的等待上限放宽到 30 分钟，
+      # 避免慢机器上「等 300s 就放弃 → 容器退出 → 重启 → 再等 300s」的死循环
+      - DB_TIMEOUT=1800
+      - CACHE_DRIVER=redis
+      - SESSION_DRIVER=redis
+      - REDIS_HOST=redis.cloud.lazycat.app.librenms.lzcapp
+      - LIBRENMS_SNMP_COMMUNITY=librenmsdocker
+      - MEMORY_LIMIT=512M
+      - APP_TRUSTED_PROXIES=*
+    binds:
+      - /lzcapp/var/librenms:/data
+      # 健康检查用静态文件（nginx 直接返回，不进 PHP）
+      - /lzcapp/pkg/content/lzc-healthz.txt:/opt/librenms/html/lzc-healthz.txt
+      # 初始化期间 PHP 页面显示的中文说明页
+      - /lzcapp/pkg/content/lzc-starting.html:/opt/librenms/html/lzc-starting.html

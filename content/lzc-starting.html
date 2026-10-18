@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="refresh" content="10">
+<title>LibreNMS 正在初始化</title>
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+    background: #0b1220; color: #e6edf7;
+  }
+  .card {
+    max-width: 520px; padding: 32px 36px; border-radius: 16px; background: #131c2f;
+    box-shadow: 0 12px 40px rgba(0,0,0,.45); border: 1px solid #22304d;
+  }
+  h1 { font-size: 20px; margin: 0 0 12px; }
+  p { margin: 0 0 10px; line-height: 1.7; color: #b9c6dc; font-size: 14px; }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #4ea1ff;
+         margin-right: 8px; animation: pulse 1.2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity: .35 } 50% { opacity: 1 } }
+  code { background: #1b2540; padding: 1px 6px; border-radius: 4px; color: #d7e3f7; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1><span class="dot"></span>LibreNMS 正在初始化</h1>
+    <p>首次启动需要初始化应用数据库（建表、写入初始数据），这一步只需要执行一次。</p>
+    <p>通常需要 1 到 3 分钟，页面会每 10 秒自动刷新；初始化完成后会自动进入登录页，无需任何操作。</p>
+    <p>如果超过 10 分钟仍未进入应用，请在「懒猫微服 → 应用」中查看 LibreNMS 的容器日志。</p>
+  </div>
+</body>
+</html>
