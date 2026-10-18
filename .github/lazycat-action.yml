@@ -29,11 +29,6 @@ images:
 
 stores:
   official:
-    enabled: true
-    skip_if_version_exists: true
-    create_if_missing: true
-    changelog_locales:
-      - zh-CN
-      - en-US
+    enabled: false   # 黑名单应用，禁止提交官方商店
   private:
     enabled: false
