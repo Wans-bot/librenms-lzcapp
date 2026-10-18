@@ -29,6 +29,11 @@ images:
 
 stores:
   official:
-    enabled: false
+    enabled: true
+    skip_if_version_exists: true
+    create_if_missing: true
+    changelog_locales:
+      - zh-CN
+      - en-US
   private:
     enabled: false
