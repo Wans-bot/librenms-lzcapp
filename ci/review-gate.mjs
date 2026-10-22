@@ -41,19 +41,29 @@ const BLACKLIST = new Set([
   'zabbix', 'zulip',
 ]);
 const shortId = String(pkg).replace(/^cloud\.lazycat\.apps?\./, '');
-if (BLACKLIST.has(shortId)) {
+
+// 黑名单只拦「新选品上架」，不拦「已在架应用的维护性更新」：
+// 应用已经建档在开发者后台（说明当初就是按显式要求提交过、并且在架），
+// 后续版本更新属于修 bug / 跟随上游，不构成新选品，不能被黑名单判死。
+// 顺序上必须等 app/list 查到建档记录后再判定，所以这里只先记标记。
+const blacklisted = BLACKLIST.has(shortId);
+const rejectBlacklisted = () => {
   console.error(
-    `[review-gate] ❌ 拒绝发布：${pkg} 命中黑名单（${shortId}）。\n` +
+    `[review-gate] ❌ 拒绝发布：${pkg} 命中黑名单（${shortId}），且开发者后台查无此应用的建档记录。\n` +
     `  依据 records/lpk-selection-preference-and-blacklist.md —— 该应用禁止提交官方商店。\n` +
     `  若确属误判，请先修改黑名单文件并同步更新本脚本，不要绕过闸门。`
   );
   process.exit(1);
-}
+};
 
 // tag 推送是显式发布意图，绕过闸门
-if (process.env.GITHUB_EVENT_NAME === 'push') emit(false, 'tag 推送，按显式意图发布');
+if (process.env.GITHUB_EVENT_NAME === 'push' && !blacklisted) emit(false, 'tag 推送，按显式意图发布');
+// 黑名单应用即使 tag 推送也要先确认「是否已在架」，避免绕过闸门
 if (!pkg) emit(false, '未提供 package，放行');
-if (!TOKEN) emit(false, '缺少 LZC_USER_TOKEN，放行（无法判断待审状态）');
+if (!TOKEN) {
+  if (blacklisted) console.warn(`[review-gate] ⚠️ ${shortId} 在黑名单里，但缺少 LZC_USER_TOKEN 无法判断是否已在架，放行以免挡住自动更新`);
+  emit(false, '缺少 LZC_USER_TOKEN，放行（无法判断待审状态）');
+}
 
 const HEAD = { 'X-User-Token': TOKEN, Cookie: `userToken=${TOKEN}`, 'Content-Type': 'application/json' };
 
@@ -68,7 +78,17 @@ try {
   }
   const apps = list.items || list.list || (Array.isArray(list) ? list : []);
   const app = apps.find((a) => a && a.package === pkg);
-  if (!app) emit(false, `应用 ${pkg} 尚无建档记录，放行让 action 处理`);
+  if (!app) {
+    if (blacklisted) rejectBlacklisted();
+    emit(false, `应用 ${pkg} 尚无建档记录，放行让 action 处理`);
+  }
+
+  if (blacklisted) {
+    console.warn(
+      `[review-gate] ⚠️ ${shortId} 在黑名单里，但已在开发者后台建档（app_id=${app.id}, resource_id=${app.resource_id}）。\n` +
+      `  判定为「已在架应用的维护性更新」，放行；黑名单只约束新选品上架。`
+    );
+  }
 
   const rv = app.review;
   if (rv && String(rv.status) === '0') {
