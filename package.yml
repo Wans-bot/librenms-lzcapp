@@ -1,7 +1,7 @@
 name: LibreNMS
 description: 开源自动发现网络监控系统（SNMP）
 package: cloud.lazycat.app.librenms
-version: 26.9.2-5
+version: 26.10.2
 author: LibreNMS
 license: GPL-3.0
 homepage: https://github.com/librenms/librenms
@@ -17,16 +17,14 @@ locales:
   zh-CN:
     name: LibreNMS 网络监控
     description: >-
-      基于 SNMP 的自动发现网络监控系统，自动发现并监控路由器、交换机、防火墙、无线
-      AP、服务器等网络设备，提供端口流量、CPU/内存/温度等健康指标、网络拓扑与告警。
+      基于 SNMP 的自动发现网络监控系统，自动发现并监控路由器、交换机、防火墙、无线 AP、服务器等网络设备，提供端口流量、CPU/内存/温度等健康指标、网络拓扑与告警。
     usage: >-
-      0. 首次启动时，应用会在后台初始化数据库，页面先显示「LibreNMS 正在初始化」，通常 1 到 3 分钟；
-      初始化完成后页面自动进入主界面，这一步只需一次，之后启动都是秒开。
+      0. 首次启动时，应用会在后台初始化数据库，页面先显示「LibreNMS 正在初始化」，通常 1 到 3 分钟； 初始化完成后页面自动进入主界面，这一步只需一次，之后启动都是秒开。
 
-      1. 打开应用即可进入 LibreNMS 主界面（管理员已自动创建并登录，默认账号 admin，密码 LibreNMS@Lazy2026，可在「设置
-      → 用户管理」中修改密码）。
+      1. 打开应用即可进入 LibreNMS 主界面（管理员已自动创建并登录，默认账号 admin，密码 LibreNMS@Lazy2026，可在「设置 → 用户管理」中修改密码）。
 
       2. 添加要监控的设备：
+
          - 单台添加：「设备 → 添加设备」，填写设备 IP/主机名、SNMP 版本（v2c/v3）与 community；
          - 本应用已内置一台演示设备（127.0.0.1，community 为 librenmsdocker），打开即可看到真实的端口流量与健康指标图表；
          - 批量添加：支持按网段自动发现（目标设备需已开启 SNMP）。
@@ -38,36 +36,24 @@ locales:
 
       6. 界面语言：默认简体中文（安装时已自动设置）；如需切换，进入「设置 → 我的设置」修改语言。
 
-      7. 使用提示：被监控设备需开启 SNMP（交换机/路由器在管理界面启用 SNMP 并配置 community，Linux 主机安装并启动
-      snmpd）。
+      7. 使用提示：被监控设备需开启 SNMP（交换机/路由器在管理界面启用 SNMP 并配置 community，Linux 主机安装并启动 snmpd）。
   en-US:
     name: LibreNMS
     description: >-
-      Auto-discovering SNMP network monitoring system for switches, routers,
-      firewalls, APs and servers, with port traffic, health metrics, topology
-      maps and alerting.
+      Auto-discovering SNMP network monitoring system for switches, routers, firewalls, APs and servers, with port traffic, health metrics, topology maps and alerting.
     usage: >-
-      0. On the very first start the app initialises its database in the
-      background and shows a "LibreNMS is starting" page for 1-3 minutes. The
-      page then continues to the dashboard automatically; later starts are
-      immediate.
+      0. On the very first start the app initialises its database in the background and shows a "LibreNMS is starting" page for 1-3 minutes. The page then continues to the dashboard automatically; later starts are immediate.
 
-      1. Open the app to enter the LibreNMS dashboard (admin auto-login; default
-      user admin, change password in Settings → Users).
+      1. Open the app to enter the LibreNMS dashboard (admin auto-login; default user admin, change password in Settings → Users).
 
-      2. Add devices: Devices → Add Device, fill in IP/hostname, SNMP version
-      and community. A built-in demo device (127.0.0.1, community
-      librenmsdocker) is pre-added.
+      2. Add devices: Devices → Add Device, fill in IP/hostname, SNMP version and community. A built-in demo device (127.0.0.1, community librenmsdocker) is pre-added.
 
-      3. Inspect device Health (CPU/memory/temperature), Ports traffic, Storage
-      and Processors.
+      3. Inspect device Health (CPU/memory/temperature), Ports traffic, Storage and Processors.
 
-      4. Create alert rules under Alerts → Alert Rules and review Alerts → Alert
-      Log.
+      4. Create alert rules under Alerts → Alert Rules and review Alerts → Alert Log.
 
       5. View topology under Devices → Network Map / Dependencies.
 
-      6. UI language defaults to Simplified Chinese; the language pack ships
-      with the app. Change it under Settings → My Settings.
+      6. UI language defaults to Simplified Chinese; the language pack ships with the app. Change it under Settings → My Settings.
 
       7. Monitored devices must have SNMP enabled.

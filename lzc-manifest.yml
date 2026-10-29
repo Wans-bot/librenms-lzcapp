@@ -80,8 +80,7 @@ services:
   db:
     image: registry.lazycat.cloud/wans/library/mariadb:4ab786d5272cd8f8
     command: >-
-      mysqld --innodb-file-per-table=1 --lower-case-table-names=0
-      --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+      mysqld --innodb-file-per-table=1 --lower-case-table-names=0 --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     environment:
       - MARIADB_RANDOM_ROOT_PASSWORD=yes
       - MYSQL_DATABASE=librenms
@@ -116,7 +115,8 @@ services:
       retries: 12
       start_period: 120s
   librenms:
-    image: registry.lazycat.cloud/wans/librenms/librenms:29cd12ef4803f9a4
+    # upstream: docker.io/librenms/librenms:26.10.2
+    image: registry.lazycat.cloud/wans/librenms/librenms:8952a85f6711d768
     entrypoint: sh -c 'sh /lzcapp/pkg/content/entrypoint.sh'
     environment:
       - TZ=Asia/Shanghai
